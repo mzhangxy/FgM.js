@@ -1,1 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Navigation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+            color: #2e7d32;
+            position: relative;
+            overflow-x: hidden;
+        }
 
+        /* 阳光光斑效果 */
+        .sunlight {
+            position: fixed;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,235,59,0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .sunlight2 {
+            position: fixed;
+            top: 20%;
+            left: 10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,235,59,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* 飘落的树叶 */
+        .leaves {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .leaf {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0.6;
+            animation: falling linear infinite;
+        }
+        .leaf:nth-child(1) { left: 5%; animation-duration: 12s; animation-delay: 0s; }
+        .leaf:nth-child(2) { left: 20%; animation-duration: 15s; animation-delay: 2s; font-size: 16px; }
+        .leaf:nth-child(3) { left: 35%; animation-duration: 10s; animation-delay: 4s; }
+        .leaf:nth-child(4) { left: 55%; animation-duration: 14s; animation-delay: 1s; font-size: 18px; }
+        .leaf:nth-child(5) { left: 75%; animation-duration: 11s; animation-delay: 3s; }
+        .leaf:nth-child(6) { left: 90%; animation-duration: 13s; animation-delay: 5s; font-size: 14px; }
+        
+        @keyframes falling {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 10px); }
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 标题区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #388e3c;
+            margin-bottom: 5px;
+        }
+        .header p {
+            color: #66bb6a;
+            font-size: 1em;
+        }
+
+        /* 搜索框 */
+        .search-container {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(46,125,50,0.15);
+            border: 2px solid rgba(129,199,132,0.5);
+        }
+        .search-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .search-tab {
+            padding: 6px 14px;
+            background: #e8f5e9;
+            border: 2px solid #a5d6a7;
+            border-radius: 20px;
+            color: #43a047;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .search-tab:hover, .search-tab.active {
+            background: #66bb6a;
+            border-color: #66bb6a;
+            color: #fff;
+        }
+        .search-row {
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 14px 20px;
+            background: #fff;
+            border: 2px solid #a5d6a7;
+            border-radius: 30px;
+            color: #2e7d32;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .search-input:focus {
+            border-color: #66bb6a;
+            box-shadow: 0 0 0 4px rgba(102,187,106,0.2);
+        }
+        .search-input::placeholder { color: #81c784; }
+        .search-btn {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #66bb6a, #43a047);
+            border: none;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(67,160,71,0.3);
+        }
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67,160,71,0.4);
+        }
+
+        /* 分类标题 */
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 25px 0 15px;
+            color: #43a047;
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+        .category-title::before,
+        .category-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #a5d6a7, transparent);
+            border-radius: 1px;
+        }
+
+        /* 网站卡片 */
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        .site-card {
+            background: rgba(255,255,255,0.8);
+            border: 2px solid rgba(165,214,167,0.6);
+            border-radius: 16px;
+            padding: 18px 12px;
+            text-align: center;
+            text-decoration: none;
+            color: #388e3c;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 12px rgba(46,125,50,0.08);
+        }
+        .site-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: #66bb6a;
+            background: #fff;
+            box-shadow: 0 12px 28px rgba(46,125,50,0.18);
+        }
+        .site-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .site-name {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        /* 底部 */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            text-align: center;
+            background: rgba(232,245,233,0.95);
+            backdrop-filter: blur(10px);
+            color: #66bb6a;
+            font-size: 0.85em;
+            font-weight: 600;
+            border-top: 2px solid rgba(165,214,167,0.5);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.6em; }
+            .sites-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+            .site-card { padding: 14px 10px; }
+            .site-icon { font-size: 1.6em; }
+            .search-row { flex-direction: column; }
+            .search-btn { width: 100%; }
+            .sunlight { width: 250px; height: 250px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sunlight"></div>
+    <div class="sunlight2"></div>
+    <div class="leaves">
+        <div class="leaf">🍃</div>
+        <div class="leaf">🌿</div>
+        <div class="leaf">🍀</div>
+        <div class="leaf">🍃</div>
+        <div class="leaf">🌱</div>
+        <div class="leaf">🍀</div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>🌳 Forest Portal 🌳</h1>
+            <p>A fresh corner of the internet</p>
+        </header>
+
+        <div class="search-container">
+            <div class="search-tabs">
+                <span class="search-tab active" onclick="setEngine('google')">Google</span>
+                <span class="search-tab" onclick="setEngine('baidu')">Baidu</span>
+                <span class="search-tab" onclick="setEngine('bing')">Bing</span>
+                <span class="search-tab" onclick="setEngine('github')">GitHub</span>
+                <span class="search-tab" onclick="setEngine('bilibili')">Bilibili</span>
+            </div>
+            <div class="search-row">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search something..." onkeydown="if(event.key==='Enter')doSearch()">
+                <button class="search-btn" onclick="doSearch()">🔍 Search</button>
+            </div>
+        </div>
+
+        <div class="category-title">🛠️ Tools</div>
+        <div class="sites-grid">
+            <a href="https://github.com" class="site-card" target="_blank"><span class="site-icon">🐱</span><span class="site-name">GitHub</span></a>
+            <a href="https://chatgpt.com" class="site-card" target="_blank"><span class="site-icon">🤖</span><span class="site-name">ChatGPT</span></a>
+            <a href="https://cloudflare.com" class="site-card" target="_blank"><span class="site-icon">☁️</span><span class="site-name">Cloudflare</span></a>
+            <a href="https://hub.docker.com" class="site-card" target="_blank"><span class="site-icon">📦</span><span class="site-name">Docker</span></a>
+            <a href="https://huggingface.co" class="site-card" target="_blank"><span class="site-icon">🤗</span><span class="site-name">Huggingface</span></a>
+            <a href="https://console.cron-job.org" class="site-card" target="_blank"><span class="site-icon">⏱</span><span class="site-name">Cron-job</span></a>
+        </div>
+
+        <div class="category-title">🌐 Social & Media</div>
+        <div class="sites-grid">
+            <a href="https://youtube.com" class="site-card" target="_blank"><span class="site-icon">▶️</span><span class="site-name">YouTube</span></a>
+            <a href="https://gmail.com" class="site-card" target="_blank"><span class="site-icon">📧</span><span class="site-name">Gmail</span></a>
+            <a href="https://store.steampowered.com" class="site-card" target="_blank"><span class="site-icon">🎮</span><span class="site-name">Steam</span></a>
+            <a href="https://www.pinterest.com" class="site-card" target="_blank"><span class="site-icon">🖼️</span><span class="site-name">Pinterest</span></a>
+            <a href="https://dribbble.com" class="site-card" target="_blank"><span class="site-icon">🏀</span><span class="site-name">Dribbble</span></a>
+            <a href="https://www.behance.net" class="site-card" target="_blank"><span class="site-icon">🅱️</span><span class="site-name">Behance</span></a>
+        </div>
+
+        <div class="category-title">🔧 Utilities</div>
+        <div class="sites-grid">
+            <a href="https://ip.sb" class="site-card" target="_blank"><span class="site-icon">🌐</span><span class="site-name">IP.sb</span></a>
+            <a href="https://itdog.cn" class="site-card" target="_blank"><span class="site-icon">🐶</span><span class="site-name">ITDog</span></a>
+            <a href="https://fiber.google.com/speedtest" class="site-card" target="_blank"><span class="site-icon">⚡</span><span class="site-name">Speedtest</span></a>
+            <a href="https://www.google.com/maps" class="site-card" target="_blank"><span class="site-icon">🗺️</span><span class="site-name">Maps</span></a>
+            <a href="https://emoji6.com" class="site-card" target="_blank"><span class="site-icon">😉</span><span class="site-name">Emoji</span></a>
+            <a href="https://notifications.google.com/" class="site-card" target="_blank"><span class="site-icon">🔔</span><span class="site-name">Notify</span></a>
+        </div>
+
+        <div class="category-title">💻 Dev & Design</div>
+        <div class="sites-grid">
+            <a href="https://www.figma.com" class="site-card" target="_blank"><span class="site-icon">✍️</span><span class="site-name">Figma</span></a>
+            <a href="https://www.sketch.com" class="site-card" target="_blank"><span class="site-icon">💎</span><span class="site-name">Sketch</span></a>
+            <a href="https://servwebssh.588945.xyz" class="site-card" target="_blank"><span class="site-icon">💻</span><span class="site-name">WebSSH</span></a>
+            <a href="https://termius.com" class="site-card" target="_blank"><span class="site-icon">⌨️</span><span class="site-name">Termius</span></a>
+            <a href="https://nodeseek.com" class="site-card" target="_blank"><span class="site-icon">🔍</span><span class="site-name">NodeSeek</span></a>
+            <a href="https://lowendtalk.com/categories/offers" class="site-card" target="_blank"><span class="site-icon">📊</span><span class="site-name">Forum</span></a>
+        </div>
+    </div>
+
+    <footer class="footer">🌿 Copyright © 2025 Forest Portal | Powered by Faiz 🌿</footer>
+
+    <script>
+        let engine = 'google';
+        const engines = {
+            google: 'https://www.google.com/search?q=',
+            baidu: 'https://www.baidu.com/s?wd=',
+            bing: 'https://www.bing.com/search?q=',
+            github: 'https://github.com/search?q=',
+            bilibili: 'https://search.bilibili.com/all?keyword='
+        };
+        function setEngine(e) {
+            engine = e;
+            document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        function doSearch() {
+            const q = document.getElementById('searchInput').value.trim();
+            if (q) window.open(engines[engine] + encodeURIComponent(q), '_blank');
+        }
+    </script>
+</body>
+</html>
